@@ -1,0 +1,43 @@
+﻿@model BBTD.Mvc.Models.BarcodeSlideshowData
+
+<h1>Barcode slideshow</h1>
+
+<p>Number of barcodes: @Model.DataCount</p>
+<p>First barcode ID: @Model.BarcodeId</p>
+
+@*
+    <form asp-controller="Home" asp-action="BarcodeSlideshowPartial" data-ajax="true" data-ajaxmethod="GET" data-ajax-complete="#barcodeReceived">
+    <input type="hidden" asp-for="BarcodeId" />
+    <input type="submit" value="Start" class="btn btn-outline-primary" />
+</form>
+
+<img id="barcodePlaceholder" src="images/1x1-ffffffff.png" width="200" height="200" />
+<img id="barcodePlaceholder" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4
+        //8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" width="200" height="200" />
+*@
+
+<div>
+    <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" width="200" height="200" />
+</div>
+
+<div>
+    <a id="barcodeSlideshowStart" class="btn btn-outline-primary">Start</a> |
+    <a asp-action="Index" class="btn btn-primary">Back to List</a>
+</div>
+
+@section Scripts {
+    <script>
+        const imgEl = document.getElementById("barcodePlaceholder");
+        const ids = [...Array(1000).keys()];
+        let counter = 1;
+
+        const barcodeSlideNext = () =>
+            imgEl.src = `/home/barcodeslideshowpartial/${ids[counter++]}`;
+
+        document.addEventListener("DOMContentLoaded", function (event) {
+            var btnEl = document.getElementById("barcodeSlideshowStart");
+            btnEl.addEventListener("click", barcodeSlideNext);
+        });
+
+    </script>
+}

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BBTD.Mvc", "BBTD.Mvc\BBTD.Mvc.csproj", "{5A41E6D1-952A-4014-A914-D6C499180A11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BBTD.DB", "BBTD.DB\BBTD.DB.csproj", "{AD4356A6-E0B1-40E4-815B-1545A2F80A36}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5A41E6D1-952A-4014-A914-D6C499180A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A41E6D1-952A-4014-A914-D6C499180A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A41E6D1-952A-4014-A914-D6C499180A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A41E6D1-952A-4014-A914-D6C499180A11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD4356A6-E0B1-40E4-815B-1545A2F80A36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD4356A6-E0B1-40E4-815B-1545A2F80A36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD4356A6-E0B1-40E4-815B-1545A2F80A36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD4356A6-E0B1-40E4-815B-1545A2F80A36}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {367D2047-6470-4AD1-919E-ACDA6823C19E}
+	EndGlobalSection
+EndGlobal
