@@ -1,5 +1,6 @@
 using BBTD.DB.Models;
 using BBTD.DB.Repository;
+using BBTD.Mvc.Hubs;
 using BBTD.Mvc.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+builder.Services.AddSignalR();
 
 builder.Services.AddDbContext<BbtddbContext>(options =>
 {
@@ -39,5 +41,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<MessageHub>("/messageHub");
 
 app.Run();

@@ -21,23 +21,50 @@
 </div>
 
 <div>
-    <a id="barcodeSlideshowStart" class="btn btn-outline-primary">Start</a> |
+    <a id="barcodeSlideshowStart" class="btn btn-outline-primary">Next barcode</a> |
     <a asp-action="Index" class="btn btn-primary">Back to List</a>
 </div>
 
 @section Scripts {
     <script>
+        const imageBaseUrl = "/home/barcode";
+        const hubUrl = "/messageHub";
+        const messageMethod = "Reading";
+
         const imgEl = document.getElementById("barcodePlaceholder");
         const ids = [...Array(1000).keys()];
-        let counter = 1;
+        let nextId = 1;
 
         const barcodeSlideNext = () =>
-            imgEl.src = `/home/barcodeslideshowpartial/${ids[counter++]}`;
+            imgEl.src = `${imageBaseUrl}/${ids[nextId++]}`;
 
-        document.addEventListener("DOMContentLoaded", function (event) {
-            var btnEl = document.getElementById("barcodeSlideshowStart");
+        const onReceiveMessage = (id, isReadingCorrect) => {
+            if (!!isReadingCorrect && id == (nextId - 1)) {
+                console.log(`Id: ${id} read succesfully`);
+                barcodeSlideNext();
+            } else {
+                console.error(`Id: ${id} reading failed`);
+            }
+        }
+
+        const onDomContentLoaded = async (event) => {
+            let signalrConn = new signalR.HubConnectionBuilder().withUrl(hubUrl).build();
+            signalrConn.on(messageMethod, onReceiveMessage);
+
+            let btnEl = document.getElementById("barcodeSlideshowStart");
             btnEl.addEventListener("click", barcodeSlideNext);
-        });
+
+            try {
+                await signalrConn.start();
+                console.log("signalr connection started");
+            } catch(err) {
+                return console.error(err.toString());
+            }
+
+            barcodeSlideNext();
+        }
+
+        document.addEventListener("DOMContentLoaded", onDomContentLoaded);
 
     </script>
 }
