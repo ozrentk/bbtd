@@ -3,6 +3,7 @@ using BBTD.DB.Repository;
 using BBTD.Mvc.Hubs;
 using BBTD.Mvc.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,13 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddScoped<IPersonRepo, PersonRepo>();
 builder.Services.AddScoped<IBarcodeGenerator, BarcodeGenerator>();
 builder.Services.AddScoped<INetworkInterfaceDetector, NetworkInterfaceDetector>();
+
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 
 var app = builder.Build();
 

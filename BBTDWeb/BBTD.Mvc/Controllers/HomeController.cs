@@ -1,20 +1,12 @@
 ﻿using AutoMapper;
 using BBTD.DB.Repository;
-using BBTD.Mvc.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Net.NetworkInformation;
-using ZXing;
-using ZXing.Common;
-using System.Text.Json;
-using BBTD.Mvc.Services;
-using Microsoft.AspNetCore.SignalR;
 using BBTD.Mvc.Hubs;
-using BBTD.DB.Models;
-using Microsoft.Extensions.Configuration;
+using BBTD.Mvc.Models;
+using BBTD.Mvc.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.Text.Json;
+using ZXing;
 
 namespace BBTD.Mvc.Controllers
 {
@@ -25,8 +17,8 @@ namespace BBTD.Mvc.Controllers
         private readonly IMapper _mapper;
         private readonly IBarcodeGenerator _barcodeGenerator;
         private readonly INetworkInterfaceDetector _networkInterfaceDetector;
-        private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<HomeController> _logger;
 
         public HomeController(
             IHubContext<MessageHub> messageHubContext, 
@@ -68,6 +60,8 @@ namespace BBTD.Mvc.Controllers
 
         public IActionResult BarcodeSlideshow()
         {
+            _logger.LogInformation("Starting BarcodeSlideshow...");
+
             var data = new BarcodeSlideshowData
             {
                 DataCount = _personRepo.GetPeopleCount(),
