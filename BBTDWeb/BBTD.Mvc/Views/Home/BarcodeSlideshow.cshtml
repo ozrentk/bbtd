@@ -1,28 +1,25 @@
 ﻿@model BBTD.Mvc.Models.BarcodeSlideshowData
 
-<h1>Barcode slideshow</h1>
-
-<p>Number of barcodes: @Model.DataCount</p>
-<p>First barcode ID: @Model.BarcodeId</p>
-
-@*
-    <form asp-controller="Home" asp-action="BarcodeSlideshowPartial" data-ajax="true" data-ajaxmethod="GET" data-ajax-complete="#barcodeReceived">
-    <input type="hidden" asp-for="BarcodeId" />
-    <input type="submit" value="Start" class="btn btn-outline-primary" />
-</form>
-
-<img id="barcodePlaceholder" src="images/1x1-ffffffff.png" width="200" height="200" />
-<img id="barcodePlaceholder" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4
-        //8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" width="200" height="200" />
-*@
+<p>Number of barcodes: @Model.DataCount (first id: @Model.BarcodeId, current id: <span id="currentBarcodeId">@Model.BarcodeId</span>)</p>
+<p>Barcode size: @Model.BarcodeSize</p>
 
 <div>
-    <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" width="200" height="200" />
+    @if (Model.BarcodeType == ZXing.BarcodeFormat.PDF_417)
+    {
+    <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges;" />
+    }
+    else
+    {
+    <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" width="@Model.BarcodeSize" height="@Model.BarcodeSize" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges;" />
+    }
 </div>
 
-<div>
+<div class="mt-2">
     <a id="barcodeSlideshowStart" class="btn btn-outline-primary">Next barcode</a> |
     <a asp-action="Index" class="btn btn-primary">Back to List</a>
+</div>
+
+<div style="height: 10em">
 </div>
 
 @section Scripts {
@@ -32,18 +29,29 @@
         const messageMethod = "Reading";
 
         const imgEl = document.getElementById("barcodePlaceholder");
-        const ids = [...Array(1000).keys()];
+        const ids = [...Array(100).keys()];
         let nextId = 1;
 
-        const barcodeSlideNext = () =>
-            imgEl.src = `${imageBaseUrl}/${ids[nextId++]}`;
+        const barcodeSlideNext = () => {
+            const currentBarcodeIdEl = document.getElementById("currentBarcodeId");
+            if (ids[nextId])
+            {
+                currentBarcodeIdEl.innerText = ids[nextId];
+                imgEl.src = `${imageBaseUrl}/${ids[nextId]}`;
+                nextId++;
+            }
+        }
 
         const onReceiveMessage = (id, isReadingCorrect) => {
-            if (!!isReadingCorrect && id == (nextId - 1)) {
+            if (!isReadingCorrect) {
+                console.error(`Id: ${id} read incorrectly`);
+            } else if (id == (nextId - 2)) {
+                console.log(`Id: ${id} read too fast`);
+            } else if (id != (nextId - 1)) {
+                console.log(`Id: ${id} incorrect`);
+            } else {
                 console.log(`Id: ${id} read succesfully`);
                 barcodeSlideNext();
-            } else {
-                console.error(`Id: ${id} reading failed`);
             }
         }
 
@@ -56,7 +64,7 @@
 
             try {
                 await signalrConn.start();
-                console.log("signalr connection started");
+                console.log("signalr connection established");
             } catch(err) {
                 return console.error(err.toString());
             }

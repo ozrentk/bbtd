@@ -14,6 +14,7 @@ using BBTD.Mvc.Services;
 using Microsoft.AspNetCore.SignalR;
 using BBTD.Mvc.Hubs;
 using BBTD.DB.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace BBTD.Mvc.Controllers
 {
@@ -23,16 +24,31 @@ namespace BBTD.Mvc.Controllers
         private readonly IPersonRepo _personRepo;
         private readonly IMapper _mapper;
         private readonly IBarcodeGenerator _barcodeGenerator;
+        private readonly INetworkInterfaceDetector _networkInterfaceDetector;
         private readonly ILogger<HomeController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public HomeController(IHubContext<MessageHub> messageHubContext, IPersonRepo personRepo, IMapper mapper, IBarcodeGenerator barcodeGenerator, ILogger<HomeController> logger)
+        public HomeController(
+            IHubContext<MessageHub> messageHubContext, 
+            IPersonRepo personRepo, 
+            IMapper mapper,
+            IBarcodeGenerator barcodeGenerator,
+            INetworkInterfaceDetector networkInterfaceDetector,
+            ILogger<HomeController> logger,
+            IConfiguration configuration)
         {
             _messageHubContext = messageHubContext;
             _personRepo = personRepo;
             _mapper = mapper;
             _barcodeGenerator = barcodeGenerator;
+            _networkInterfaceDetector = networkInterfaceDetector;
             _logger = logger;
+            _configuration = configuration;
         }
+
+        private int BarcodeSize => _configuration.GetValue<int>("Barcode:Size");
+        
+        private BarcodeFormat BarcodeType => (BarcodeFormat)_configuration.GetValue<int>("Barcode:TypeId");
 
         public IActionResult Index()
         {
@@ -55,25 +71,32 @@ namespace BBTD.Mvc.Controllers
             var data = new BarcodeSlideshowData
             {
                 DataCount = _personRepo.GetPeopleCount(),
-                BarcodeId = 1
+                BarcodeType = BarcodeType,
+                BarcodeSize = BarcodeSize,
+                BarcodeId = 1,
             };
 
             return View("BarcodeSlideshow", data);
         }
+
+        public IActionResult Setup()
+        {
+            return View();
+        }
+
 
         public IActionResult Barcode(int id)
         {
             var dbPerson = _personRepo.GetPerson(id);
             var vmPerson = _mapper.Map<BBTD.DB.Models.Person, BBTD.Mvc.Models.Person>(dbPerson);
             var jsonPerson = JsonSerializer.Serialize(vmPerson);
-            var imageData = _barcodeGenerator.GenerateBarcode(jsonPerson);
+            var imageData = _barcodeGenerator.GenerateBarcode(jsonPerson, BarcodeSize, BarcodeType);
 
             return new FileContentResult(imageData, "application/octet-stream")
             {
-                FileDownloadName = $"barcode-{id}.png"
+                FileDownloadName = $"barcode-{id}-{BarcodeSize}.png"
             };
         }
-
 
         [HttpPost]
         public async Task<IActionResult> Reader([FromBody] BBTD.Mvc.Models.Person person)
@@ -91,6 +114,14 @@ namespace BBTD.Mvc.Controllers
             {
                 isReadingCorrect = true;
             }
+            else if (person.IsForce)
+            {
+                isReadingCorrect = true;
+            }
+            else
+            {
+                isReadingCorrect = false;
+            }
 
             await _messageHubContext.Clients.All.SendAsync(
                 "Reading", 
@@ -100,5 +131,22 @@ namespace BBTD.Mvc.Controllers
             return Json(isReadingCorrect);
         }
 
+        public IActionResult MyLanAddress()
+        {
+            var authority = _networkInterfaceDetector.GetAuthority();
+            
+            return Ok(authority);
+        }
+
+        public IActionResult MyLanBarcode()
+        {
+            var authority = _networkInterfaceDetector.GetAuthority();
+            var imageData = _barcodeGenerator.GenerateBarcode(authority, BarcodeSize, BarcodeType);
+
+            return new FileContentResult(imageData, "application/octet-stream")
+            {
+                FileDownloadName = $"my-lan-bc.png"
+            };
+        }
     }
 }

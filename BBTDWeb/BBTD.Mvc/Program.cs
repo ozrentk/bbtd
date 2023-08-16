@@ -19,7 +19,7 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 builder.Services.AddScoped<IPersonRepo, PersonRepo>();
 builder.Services.AddScoped<IBarcodeGenerator, BarcodeGenerator>();
-
+builder.Services.AddScoped<INetworkInterfaceDetector, NetworkInterfaceDetector>();
 
 var app = builder.Build();
 
@@ -31,7 +31,7 @@ var app = builder.Build();
 //    app.UseHsts();
 //}
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
