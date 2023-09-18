@@ -1,0 +1,128 @@
+﻿@model OutputDataFile
+
+<h1>Data in file @(Model.Name)</h1>
+
+
+
+
+
+<div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Original data
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Message</th>
+                            <th>Level</th>
+                            <th>Timestamp</th>
+                            <th>Application</th>
+                            <th>Reference</th>
+                            <th>Operation</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.LogRecords)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Message)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.LevelString)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ExactTimestamp)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Application)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Reference)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Operation)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                Performance data
+            </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Record No</th>
+                            <th>Total</th>
+                            <th>Image Generation</th>
+                            <th>Image Loading</th>
+                            <th>Barcode Reading</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.AnalysisRecords)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.RecordNumber)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.TotalTime)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ImageGenerationTime)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ImageLoadingTime)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.BarcodeReadingTime)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                Performance data graphs
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+

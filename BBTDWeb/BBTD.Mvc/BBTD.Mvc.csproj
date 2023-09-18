@@ -3,8 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\Home\**" />
+    <Content Remove="Views\Home\**" />
+    <EmbeddedResource Remove="Views\Home\**" />
+    <None Remove="Views\Home\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BBTD.DB\BBTD.DB.csproj" />
@@ -20,7 +26,10 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.9" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.8" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.9" />
+    <PackageReference Include="NLog" Version="5.2.3" />
+    <PackageReference Include="NLog.Web" Version="5.3.3" />
+    <PackageReference Include="NLog.Web.AspnetCore" Version="5.3.3" />
     <PackageReference Include="serilog" Version="3.0.1" />
     <PackageReference Include="serilog.aspnetcore" Version="7.0.0" />
     <PackageReference Include="serilog.Extensions.Hosting" Version="7.0.0" />

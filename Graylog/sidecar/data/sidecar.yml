@@ -1,0 +1,7 @@
+server_url: ${GS_SERVER_URL}
+server_api_token: ${GS_SERVER_API_TOKEN}
+node_id: ${GS_NODE_ID}
+node_name: ${GS_NODE_NAME}
+update_interval: ${GS_UPDATE_INTERVAL}
+log_rotate_max_file_size: ${GS_LOG_ROTATE_MAX_FILE_SIZE}
+log_rotate_keep_files: ${GS_LOG_ROTATE_KEEP_FILES}

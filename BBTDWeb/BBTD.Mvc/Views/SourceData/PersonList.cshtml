@@ -1,7 +1,7 @@
 ﻿ @model IEnumerable<BBTD.Mvc.Models.Person>
 
-<h1>List of database items</h1>
-
+<h4>List of People</h4>
+<hr />
 <table class="table">
     <thead>
         <tr>
@@ -54,7 +54,7 @@
                 @Html.DisplayFor(modelItem => item.Description)
             </td>
             <td>
-                @Html.ActionLink("Details", "Details", new { id = item.Id })
+                <a asp-action="Details" asp-route-id=@(item.Id) class="btn btn-outline-primary">Details</a>
             </td>
         </tr>
     }

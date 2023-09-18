@@ -1,0 +1,12 @@
+﻿@model BBTD.Mvc.Models.OutputDataFile
+
+<h1>Delete Output Data</h1>
+
+<h3>Are you sure you want to delete data file @(Model.Name)?</h3>
+<div>
+    <form asp-action="OutputDataDelete">
+        <input type="hidden" asp-for="Name" class="btn btn-danger" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="OutputData" class="btn btn-outline-primary">Back to List</a>
+    </form>
+</div>

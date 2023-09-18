@@ -1,0 +1,184 @@
+﻿@model BBTD.Mvc.Models.BarcodeSlideshowData
+
+<p>Current id: <span id="currentBarcodeId">-</span></p>
+
+<div>
+    @if (Model.BarcodeType == ZXing.BarcodeFormat.PDF_417)
+    {
+        <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; margin: 3rem" />
+    }
+    else
+    {
+        <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" width="@Model.BarcodeSize" height="@Model.BarcodeSize" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; margin: 3rem" />
+    }
+</div>
+
+<div class="mt-2">
+    <a id="barcodeSlideshowNext" class="btn btn-outline-primary">Next barcode</a> |
+    <a id="barcodeSlideshowStart" class="btn btn-primary">Slideshow test</a> |
+    <a asp-action="Index" class="btn btn-warning">Reset</a>
+</div>
+
+<div style="height: 10em">
+</div>
+
+@section Scripts {
+    <script>
+        const logDeliveryUrl = "/api/logdelivery/fromwebui";
+        let logs = [];
+        let isSlideShowTest = false;
+
+        class LogLevel {
+            static get Trace() { return 0; }
+            static get Debug() { return 1; }
+            static get Info() { return 2; }
+            static get Warn() { return 3; }
+            static get Error() { return 4; }
+            static get Fatal() { return 5; }
+            static get Off() { return 6; }
+        }
+
+        class LogOperation {
+            static get IMG_REQ() { return "IMG_REQ"; }
+            static get IMG_RECV() { return "IMG_RECV"; }
+            static get UI_RECV_FAIL() { return "UI_RECV_FAIL"; }
+            static get UI_BC_NOTIFIED() { return "UI_BC_NOTIFIED"; }
+        }
+
+        const addLog = (message, levelNumber, reference, operation) => {
+            if (levelNumber >= LogLevel.Error)
+                console.error(message);
+            else if (levelNumber >= LogLevel.Warn)
+                console.warn(message);
+            else
+                console.log(message);
+
+            logs.push({
+                message: message,
+                levelNumber: levelNumber,
+                exact_ts: new Date().toISOString(),
+                reference: reference,
+                operation: operation
+            });
+        }
+
+        const sendLogs = async () => {
+            console.log(`Executing sendLogs() for ${logs.length} messages...`);
+            await fetch(logDeliveryUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(logs)
+            });
+            logs = [];
+        }
+
+        const sendLog = async (message, levelNumber, reference, operation) => {
+            addLog(message, levelNumber, reference, operation);
+            await sendLogs();
+        }
+
+        const addOrSendLog = async (message, levelNumber, reference, operation) => {
+            if (isSlideShowTest)
+                addLog(message, levelNumber, reference, operation);
+            else
+                await sendLog(message, levelNumber, reference, operation);
+        }
+
+        const imageBaseUrl = "/testingarea/barcode";
+        const hubUrl = "/messageHub";
+        const messageMethod = "Reading";
+        const barcodeReadTimeout = @Model.TimeoutMilliseconds;
+        let barcodeReadingTimeoutId = -1;
+
+        const dataCount = @Model.DataCount;
+        const ids = Array.from({ length: dataCount }, (_, i) => i + 1);
+        let currentIndex = -1; @*Model.BarcodeId;*@
+
+        const onDomContentLoaded = async (event) => {
+            let signalrConn = new signalR.HubConnectionBuilder().withUrl(hubUrl).build();
+            signalrConn.on(messageMethod, onReceiveMessage);
+
+            let btnElNext = document.getElementById("barcodeSlideshowNext");
+            btnElNext.addEventListener("click", barcodeSlideNext);
+
+            let btnElSlideshowStart = document.getElementById("barcodeSlideshowStart");
+            btnElSlideshowStart.addEventListener("click", barcodeSlideshowStart);
+
+            try {
+                await signalrConn.start();
+                sendLog("signalr connection established", LogLevel.Debug);
+            } catch(err) {
+                sendLog(`signalr initialization error: ${err.toString()}`, LogLevel.Error);
+                return;
+            }
+        }
+
+        const onReceiveMessage = async (id, isReadingCorrect) => {
+            clearTimeout(barcodeReadingTimeoutId);
+            if (!isReadingCorrect) {
+                await addOrSendLog(`[Barcode id=${id}] UI received read failure confirmation`, LogLevel.Error, id, LogOperation.UI_RECV_FAIL);
+                //console.error(`Id: ${id} read incorrectly`);
+            } 
+            //else if (id == (currentIndex - 2)) {
+            //    addLog(`Id: ${id} read too fast`, 3);
+            //    //console.error(`Id: ${id} read too fast`);
+            //} 
+            //else if (id != (currentIndex - 1)) {
+            //    addLog(`Id: ${id} incorrect`, 3);
+            //    //console.error(`Id: ${id} incorrect`);
+            //} 
+            else {
+                await addOrSendLog(`[Barcode id=${id}] UI received barcode reading success information`, LogLevel.Debug, id, LogOperation.UI_BC_NOTIFIED);
+                //console.log(`Id: ${id} read succesfully`);
+            }
+
+            if (isSlideShowTest) {
+                await barcodeSlideNext();
+            }
+        }
+
+        const barcodeSlideshowStart = async () => {
+            isSlideShowTest = true;
+            await barcodeSlideNext();
+        }
+
+        const barcodeSlideNext = async () => {
+            const currentBarcodeIdEl = document.getElementById("currentBarcodeId");
+            currentIndex++;
+            if (currentIndex < dataCount) {
+                // Continuation
+                const id = ids[currentIndex];
+                currentBarcodeIdEl.innerText = id;
+                imgEl.src = `${imageBaseUrl}/${id}`;
+                await addOrSendLog(`[Barcode id=${id}] Sending image request from UI to server`, LogLevel.Debug, id, LogOperation.IMG_REQ)
+            } else {
+                // Finish
+                currentIndex = -1;
+                isSlideShowTest = false;
+                currentBarcodeIdEl.innerText = "Done";
+                imgEl.src = "/images/1x1-ffffffff.png";
+                await addOrSendLog(`Barcode testing finished, sending logs...`, LogLevel.Debug)
+                await sendLogs();
+            }
+        }
+
+        const imgEl = document.getElementById("barcodePlaceholder");
+        imgEl.addEventListener('load', async (evt) => {
+            if (currentIndex != -1 && currentIndex < dataCount) {
+                const id = ids[currentIndex]
+                await addOrSendLog(`[Barcode id=${id}] Received image response, image loaded to UI`, LogLevel.Debug, id, LogOperation.IMG_RECV)
+                if (isSlideShowTest && barcodeReadTimeout > 0) {
+                    barcodeReadingTimeoutId = setTimeout(async () => {
+                        await addOrSendLog(`[Barcode id=${id}] Loading timed out`, LogLevel.Error, id, LogOperation.LOAD_TIMEOUT)
+                        await barcodeSlideNext();
+                    }, barcodeReadTimeout);
+                }
+            }
+        })
+        
+        document.addEventListener("DOMContentLoaded", onDomContentLoaded);
+
+    </script>
+}

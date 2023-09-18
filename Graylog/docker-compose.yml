@@ -64,6 +64,24 @@ services:
       - graylog_journal:/usr/share/graylog/data/journal
     restart: on-failure
 
+  # graylog-sidecar:
+  #   build: sidecar
+  #   depends_on:
+  #     graylog:
+  #       condition: service_started
+  #   environment:
+  #     - GS_SERVER_URL=http://localhost:9000/api/
+  #     - GS_SERVER_API_TOKEN=mv52k4jo5qvgto6o35ep5rgrhfp3jnq20hlpkrbk6blhporuqj6
+  #     - GS_NODE_ID=gs-1
+  #     - GS_NODE_NAME=graylog-sidecar-node-1
+  #     - GS_UPDATE_INTERVAL=10
+  #     - GS_LOG_ROTATE_MAX_FILE_SIZE=10MiB
+  #     - GS_LOG_ROTATE_KEEP_FILES=7
+
+  #   # volumes:
+  #   #   - /c/tmp/docker-fs/applications:/var/log/some-folder
+  #   restart: on-failure
+
 volumes:
   mongodb_data:
   os_data:

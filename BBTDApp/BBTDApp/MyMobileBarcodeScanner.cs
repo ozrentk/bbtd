@@ -66,6 +66,13 @@ namespace BBTDApp
                     scanHandler(result, ZxingActivity.ScanningOptions);
                 }
             };
+            ZxingActivity.CanceledHandler = delegate
+            {
+                if (scanHandler != null)
+                {
+                    scanHandler(null, ZxingActivity.ScanningOptions);
+                }
+            };
             context2.StartActivity(intent);
         }
     }

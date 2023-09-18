@@ -1,0 +1,55 @@
+﻿@model SetupData
+
+<form asp-controller="Setup">
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label asp-for="ServerUrl" class="control-label"></label>
+                <input asp-for="ServerUrl" type="text" class="form-control">
+                <span asp-validation-for="ServerUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NumberOfItems" class="control-label"></label>
+                <input asp-for="NumberOfItems" type="number" class="form-control" min="1" max="1000">
+                <span asp-validation-for="NumberOfItems" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="BarcodeType" class="control-label"></label>
+                <select asp-for="BarcodeType" class="form-control">
+                    <option value="1">Aztec</option>
+                    <option value="32">Data Matrix</option>
+                    <option value="1024">PDF417</option>
+                    <option value="2048">QR Code</option>
+                </select>
+                <span asp-validation-for="BarcodeType" class="text-danger"></span>
+            </div>
+            <hr />
+            @*<div class="form-group">
+                <label asp-for="GraylogUrl" class="control-label"></label>
+                <input asp-for="GraylogUrl" type="text" class="form-control">
+                <span asp-validation-for="GraylogUrl" class="text-danger"></span>
+            </div>*@
+            <div class="form-group">
+                <label asp-for="BarcodeSize" class="control-label"></label>
+                <input asp-for="BarcodeSize" type="number" class="form-control" min="1">
+                <span asp-validation-for="BarcodeSize" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeoutMilliseconds" class="control-label"></label>
+                <input asp-for="TimeoutMilliseconds" type="number" class="form-control" min="0">
+                <span asp-validation-for="TimeoutMilliseconds" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label class="control-label">Scan Configuration</label>
+                <input type="image" class="mt-2 form-control" style="width: auto; padding: 1rem" src="/Setup/AppConfigurationBarcode" alt="Configuration barcode shown after [Save]" />
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="mt-2 btn btn-primary">Submit</button> | <button type="submit" name="isRefresh" value="true" class="mt-2 btn btn-outline-primary">Refresh</button>
+</form>
+
+@*
+    <img src="/Home/AppConfigurationBarcode?serverUrl=@(Model.ServerUrl)&graylogUrl=@(Model.GraylogUrl)&barcodeType=@(Model.BarcodeType)&numberOfItems=@(Model.NumberOfItems)">
+*@

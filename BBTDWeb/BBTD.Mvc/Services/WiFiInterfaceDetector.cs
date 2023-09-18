@@ -1,38 +1,34 @@
 ﻿using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Identity.Client;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace BBTD.Mvc.Services
 {
-    public interface INetworkInterfaceDetector
+    public interface IWiFiInterfaceDetector
     {
         string GetWiFiAddress();
-        string GetPort();
-        string GetAuthority();
     }
 
-    public class NetworkInterfaceDetector : INetworkInterfaceDetector
+    public class WiFiInterfaceDetector : IWiFiInterfaceDetector
     {
         private readonly IServer _server;
 
-        public NetworkInterfaceDetector(IServer server)
+        public WiFiInterfaceDetector(IServer server)
         {
             _server = server;
         }
 
-        public string GetAuthority() =>
-            $"http://{GetWiFiAddress()}:{GetPort()}";
-
         public string GetWiFiAddress()
         {
-            var firstUpInterface = 
+            var firstUpInterface =
                 NetworkInterface
                     .GetAllNetworkInterfaces()
                     .OrderByDescending(c => c.Speed)
-                    .FirstOrDefault(c => 
-                        c.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 && 
+                    .FirstOrDefault(c =>
+                        c.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 &&
                         c.OperationalStatus == OperationalStatus.Up);
 
             if (firstUpInterface == null)
@@ -40,7 +36,7 @@ namespace BBTD.Mvc.Services
 
             var props = firstUpInterface.GetIPProperties();
 
-            var firstIpV4Address = 
+            var firstIpV4Address =
                 props.UnicastAddresses
                     .Where(c => c.Address.AddressFamily == AddressFamily.InterNetwork)
                     .Select(c => c.Address)
@@ -50,20 +46,6 @@ namespace BBTD.Mvc.Services
                 return "127.0.0.1";
 
             return firstIpV4Address.ToString();
-
         }
-
-        public string GetPort()
-        {
-            var addressFeature = _server.Features.Get<IServerAddressesFeature>();
-            var firstAddress = addressFeature.Addresses.FirstOrDefault();
-
-            if (firstAddress == null)
-                return null;
-
-            var port = firstAddress.Split(":").Last();
-            return port;
-        }
-
     }
 }

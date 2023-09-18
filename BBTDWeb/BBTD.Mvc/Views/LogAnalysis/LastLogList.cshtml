@@ -1,0 +1,91 @@
+﻿@model IEnumerable<BBTD.Mvc.Models.NLogRecord>
+
+<h1>List of logs since last test</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Message)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LevelString)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExactTimestamp)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Application)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Reference)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Operation)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Message)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LevelString)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExactTimestamp)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Application)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Reference)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Operation)
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+
+<form id="formSaveLogData" asp-action="SaveLogData">
+    <p>
+        <a asp-action="Create" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Save logs as output data</a>
+    </p>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save last log data</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="dataSetName" class="col-form-label">Dataset name:</label>
+                        <input type="text" class="form-control" name="dataSetName">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="btnSaveLogs" class="btn btn-primary">Save logs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+
+@section Scripts {
+    <script>
+        var btnSaveLogs = document.getElementById('btnSaveLogs');
+        var formSaveLogData = document.getElementById('formSaveLogData');
+
+        btnSaveLogs.addEventListener('click', function (event) {
+            formSaveLogData.submit();
+        })
+    </script>
+}

@@ -6,117 +6,75 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/layoutRow1"
-        android:orientation = "horizontal" 
-        android:layout_width = "fill_parent" 
-        android:layout_height = "wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"> 
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:columnCount="2"
+        android:rowCount="5"
+        android:padding="4dp">
 
         <TextView
-            android:layout_width="90dp"
-            android:layout_height="wrap_content"
-            android:text="Service URL"/>
+            android:text="Server URL"/>
 
         <EditText
-            android:id="@+id/txtAuthority"
-            android:inputType="text" 
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="http://192.168.100.18"/>
-
-        <Button
-            android:id="@+id/btnScanAuthority"
-            android:text="Read"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableLeft="@drawable/ic_qrcode"
-            style="@style/button_text"/>
-  
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutRow2"
-        android:orientation = "horizontal" 
-        android:layout_width = "fill_parent" 
-        android:layout_height = "wrap_content"
-        android:layout_below="@id/layoutRow1"> 
+            android:id="@+id/txtWebAppEndpoint"
+            android:inputType="text"
+            android:text="http://192.168.100.18:5111"
+            android:layout_gravity="fill_horizontal"/>
 
         <TextView
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5"
-            android:text="Scan delay"/>
+            android:text="Number of items"/>
+
+        <EditText
+            android:id="@+id/txtNumberOfItems"
+            android:inputType="number"
+            android:text="100"
+            android:layout_gravity="fill_horizontal"/>
+
+        <TextView
+            android:text="Barcode type"/>
+
+        <Spinner
+            android:id="@+id/spinBarcodeType"
+            android:layout_gravity="fill_horizontal"/>
+
+        <Button
+            android:id="@+id/btnScanWebAppConfiguration"
+            android:text="Scan Configuration"
+            android:drawableLeft="@drawable/ic_qrcode"
+            style="@style/button_text"
+            android:layout_width="match_parent"
+            android:layout_columnSpan="2"/>
+
+        <TextView
+            android:text="Scan Delay"/>
 
         <EditText
             android:id="@+id/txtDelay"
             android:inputType="number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="10"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutRow3"
-        android:orientation = "horizontal" 
-        android:layout_width = "fill_parent" 
-        android:layout_height = "wrap_content"
-        android:layout_below="@id/layoutRow2"> 
+            android:text="10"
+            android:layout_gravity="fill_horizontal"/>
 
         <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
             android:text="Adaptive delay" />
 
         <Switch
-            android:id="@+id/switchAdaptiveDelay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutRow4"
-        android:orientation = "horizontal" 
-        android:layout_width = "fill_parent" 
-        android:layout_height = "wrap_content"
-        android:layout_below="@id/layoutRow3"> 
+            android:id="@+id/switchAdaptiveDelay"/>
 
         <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:text="Native scanning" />
+            android:text="Native Scanning" />
 
         <Switch
-            android:id="@+id/switchNativeScanning"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutRow5"
-        android:orientation = "horizontal" 
-        android:layout_width = "fill_parent" 
-        android:layout_height = "wrap_content"
-        android:layout_below="@id/layoutRow4"> 
+            android:id="@+id/switchNativeScanning"/>
 
         <TextView
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
             android:text="Autofocus" />
 
         <Switch
             android:id="@+id/switchAutofocus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:checked="true"/>
 
-    </LinearLayout>
-
+    </GridLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -3,6 +3,7 @@ using System.Drawing;
 using ZXing.Common;
 using ZXing;
 using ZXing.QrCode;
+using System.IO;
 
 namespace BBTD.Mvc.Services
 {
