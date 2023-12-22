@@ -2,26 +2,123 @@
 
 <h1>Output Data</h1>
 
-<table class="table">
+<form id="formExportAnalyzedData" asp-action="ExportAnalyzedData">
+    <p>
+        <a asp-action="Export" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Export analyzed data</a>
+
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Export selected analyzed data</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="analyzedDataSetName" class="col-form-label">Dataset name:</label>
+                            <input type="text" class="form-control" name="analyzedDataSetName" id="analyzedDataSetName">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" id="btnSaveData" class="btn btn-primary" data-bs-dismiss="modal">Save data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </p>
+</form>
+
+<table class="table" id="outputDataList">
     <thead>
         <tr>
             <th>
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th></th>
+            <th>Select</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.ActionLink("Details", "OutputDataDetails", new { name = item.Name }) |
-                @Html.ActionLink("Delete", "OutputDataDelete", new { name = item.Name })
-            </td>
-        </tr>
+        @{ 
+            int i=0;
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.ActionLink("Details", "OutputDataDetails", new { name = item.Name }) |
+                        @Html.ActionLink("Delete", "OutputDataDelete", new { name = item.Name })
+                    </td>
+                    <td>
+                        @Html.CheckBoxFor(model => item.IsSelected, new { @class="cbOutputDataSelect", data_cb_idx = i, data_cb_name = item.Name })
+                    </td>
+                </tr>
+                i++;
+            }
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script async>
+        let [cbClicked, previousCbClicked] = [null, null];
+
+        const cbs = document.getElementsByClassName('cbOutputDataSelect');
+        const btnSaveData = document.getElementById('btnSaveData');
+        const formExportAnalyzedData = document.getElementById('formExportAnalyzedData');
+
+        const onCheckboxClick = event => {
+            [cbClicked, previousCbClicked] = [event.target, cbClicked];
+
+            if (event.ctrlKey) {
+                setCheckboxes(cbs, previousCbClicked, cbClicked);
+            }
+        };
+
+        function setCheckboxes(cbs, start, end) {
+            if (end.dataset.cbIdx < start.dataset.cbIdx) {
+                [end, start] = [start, end];
+            }
+
+            for (let cb of cbs) {
+                const [cbIdx, cbStartIdx, cbEndIdx] = [parseInt(cb.dataset.cbIdx), parseInt(start.dataset.cbIdx), parseInt(end.dataset.cbIdx)];
+                if (cbIdx >= cbStartIdx && cbIdx <= cbEndIdx) {
+                    cb.checked = true;
+                }
+            }
+        };
+
+        const onSaveData = async event => {
+            const analyzedDataSetName = document.getElementById('analyzedDataSetName').value;
+
+            let names = [];
+            for (let cb of cbs) {
+                if (cb.checked) {
+                    names.push(cb.dataset.cbName);
+                }
+            }
+
+            const requestData = {
+                datasetName: analyzedDataSetName,
+                fileNames: names
+            }
+
+            await fetch('ExportAnalyzedData', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+        }
+
+        for (let cb of cbs) {
+            cb.onclick = onCheckboxClick;
+        }
+
+        btnSaveData.addEventListener('click', onSaveData);
+    </script>
+}

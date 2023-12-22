@@ -11,5 +11,6 @@ namespace BBTD.Mvc.Models
         public string Name { get; set; }
         public List<NLogRecord> LogRecords { get; set; }
         public List<AnalysisRecord> AnalysisRecords { get; set; }
+        public bool IsSelected { get; set; }
     }
 }

@@ -1,15 +1,9 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using Java.Lang;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ZXing.Mobile;
 
@@ -46,6 +40,47 @@ namespace BBTDApp
             }
 
             return Application.Context;
+        }
+
+        public async Task<ZXing.Result> ScanWithTimeout(Context context, MobileBarcodeScanningOptions options, int timeout)
+        {
+            Context ctx = GetContext(context);
+            var scanTask = Task.Run(() =>
+            {
+                ManualResetEvent waitScanResetEvent = new ManualResetEvent(initialState: false);
+                Intent intent = new Intent(ctx, typeof(ZxingActivity));
+                intent.AddFlags(ActivityFlags.NewTask);
+                ZxingActivity.UseCustomOverlayView = base.UseCustomOverlay;
+                ZxingActivity.CustomOverlayView = CustomOverlay;
+                ZxingActivity.ScanningOptions = options;
+                ZxingActivity.ScanContinuously = false;
+                ZxingActivity.TopText = base.TopText;
+                ZxingActivity.BottomText = base.BottomText;
+                ZXing.Result scanResult = null;
+                ZxingActivity.CanceledHandler = () =>
+                {
+                    waitScanResetEvent.Set();
+                };
+                ZxingActivity.ScanCompletedHandler = (ZXing.Result result) =>
+                {
+                    scanResult = result;
+                    waitScanResetEvent.Set();
+                };
+                ctx.StartActivity(intent);
+                waitScanResetEvent.WaitOne();
+                return scanResult;
+            });
+
+            var delayTask = Task.Delay(timeout);
+            var finishedTask = await Task.WhenAny(scanTask, delayTask);
+            if (finishedTask == scanTask)
+            {
+                return scanTask.Result;
+            }
+            else
+            {
+                return default;
+            }
         }
 
         public async Task ScanContinuouslyAsync(Context context, MobileBarcodeScanningOptions options, Action<ZXing.Result, MobileBarcodeScanningOptions> scanHandler)

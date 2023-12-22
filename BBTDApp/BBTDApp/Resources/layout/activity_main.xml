@@ -47,6 +47,15 @@
             android:layout_columnSpan="2"/>
 
         <TextView
+            android:text="Client scan timeout"/>
+
+        <EditText
+            android:id="@+id/txtScanTimeout"
+            android:inputType="number"
+            android:text="5000"
+            android:layout_gravity="fill_horizontal"/>
+
+        <TextView
             android:text="Scan Delay"/>
 
         <EditText
@@ -54,6 +63,7 @@
             android:inputType="number"
             android:text="10"
             android:layout_gravity="fill_horizontal"/>
+
 
         <TextView
             android:text="Adaptive delay" />
@@ -72,7 +82,13 @@
 
         <Switch
             android:id="@+id/switchAutofocus"
-            android:checked="true"/>
+            android:checked="true" />
+
+        <TextView
+            android:text="TryHarder" />
+
+        <Switch
+            android:id="@+id/switchTryHarder" />
 
     </GridLayout>
 
@@ -84,23 +100,34 @@
 
         <Button
             android:id="@+id/btnScanSingle"
-            android:text="Scan single"
+            android:text="Scan\nsingle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="50"
+            android:layout_weight="33"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
             android:drawableLeft="@drawable/ic_scan"
             style="@style/button_text"/>
 
         <Button
-            android:id="@+id/btnScanContinuous"
-            android:text="Scan continuous"
+            android:id="@+id/btnScanOneByOne"
+            android:text="Scan\none-by-one"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="50"
+            android:layout_weight="33"
             android:layout_alignParentBottom="true"
             android:layout_toRightOf="@id/btnScanSingle"
+            android:drawableLeft="@drawable/ic_scan"
+            style="@style/button_text"/>
+
+        <Button
+            android:id="@+id/btnScanContinuous"
+            android:text="Scan\ncontinuous"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="33"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@id/btnScanOneByOne"
             android:drawableLeft="@drawable/ic_scan"
             style="@style/button_text"/>
 

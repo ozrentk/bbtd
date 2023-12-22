@@ -1,0 +1,122 @@
+﻿@using BBTD.Mvc.Services;
+@model IEnumerable<BBTD.Mvc.Models.NLogRecord>
+
+@inject ISetupRepo _setupRepo
+@inject ILogFileHandler _logFileHandler
+
+@{
+    var setupData = _setupRepo.GetData();
+    var dsTempName = 
+        string.Format(
+            "{0}-items{1}-size{2}-dist{3}-dataset", 
+            setupData.BarcodeType, 
+            setupData.NumberOfItems,
+            setupData.BarcodeSize,
+            setupData.DistanceFromScreen
+        );
+    var existingFile = _logFileHandler.GetOutputDataFiles(dsTempName).LastOrDefault();
+
+    var dsName = dsTempName + "#1";
+    if (existingFile != null)
+    {
+        var dsToken = existingFile.Name.Split('-').LastOrDefault();
+        if (dsToken != null)
+        {
+            var dsNumber = dsToken.Split('#').LastOrDefault();
+            if (dsNumber != null)
+            {
+                dsName = dsTempName + "#" + (int.Parse(dsNumber) + 1);
+            }
+        }
+    }
+}
+
+<h1>List of logs since last test</h1>
+
+<form id="formSaveLogData" asp-action="SaveLogData">
+    <p>
+        <a asp-action="Create" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Save logs as output data</a>
+    </p>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save log data</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="dataSetName" class="col-form-label">Dataset name:</label>
+                        <input type="text" class="form-control" name="dataSetName" value="@dsName">
+                        <input type="hidden" name="from" value="@(ViewBag.From)">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="btnSaveLogs" class="btn btn-primary">Save logs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+
+<table class="table">
+    <thead>
+        <tr class="row">
+            <th class="col-6">
+                @Html.DisplayNameFor(model => model.Message)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.LevelString)
+            </th>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.ExactTimestamp)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Application)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Reference)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Operation)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+            <tr class="row">
+                <td class="col-6">
+                    @Html.DisplayFor(modelItem => item.Message)
+                </td>
+                <td class="col-1">
+                    @Html.DisplayFor(modelItem => item.LevelString)
+                </td>
+                <td class="col-2">
+                    @Html.DisplayFor(modelItem => item.ExactTimestamp)
+                </td>
+                <td class="col-1">
+                    @Html.DisplayFor(modelItem => item.Application)
+                </td>
+                <td class="col-1">
+                    @Html.DisplayFor(modelItem => item.Reference)
+                </td>
+                <td class="col-1">
+                    @Html.DisplayFor(modelItem => item.Operation)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        var btnSaveLogs = document.getElementById('btnSaveLogs');
+        var formSaveLogData = document.getElementById('formSaveLogData');
+
+        btnSaveLogs.addEventListener('click', function (event) {
+            formSaveLogData.submit();
+        })
+    </script>
+}

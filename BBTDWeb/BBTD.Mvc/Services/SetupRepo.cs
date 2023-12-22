@@ -58,7 +58,7 @@ namespace BBTD.Mvc.Services
                 NumberOfItems = 100,
                 BarcodeSize = 200,
                 BarcodeType = ZXing.BarcodeFormat.QR_CODE,
-                TimeoutMilliseconds = 3000
+                ServerTimeoutMilliseconds = 3000
             };
 
             var jsonSetup = JsonSerializer.Serialize(_setupData);

@@ -1,4 +1,5 @@
 ﻿using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Widget;
@@ -12,8 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
 using ZXing.Mobile;
@@ -35,14 +38,44 @@ namespace BBTDApp.Activities
         private EditText TxtNumberOfItems =>
             FindViewById<EditText>(Resource.Id.txtNumberOfItems);
 
+        private int NumberOfItemsValue
+        {
+            get
+            {
+                int.TryParse(TxtNumberOfItems.Text, out int numOfItems);
+                return numOfItems;
+            }
+        }
+
         private Spinner SpinBarcodeType =>
             FindViewById<Spinner>(Resource.Id.spinBarcodeType);
 
         private Android.Widget.Button BtnScanWebAppConfiguration =>
             FindViewById<Android.Widget.Button>(Resource.Id.btnScanWebAppConfiguration);
 
+        private EditText TxtScanTimeout =>
+            FindViewById<EditText>(Resource.Id.txtScanTimeout);
+
+        private int ScanTimeoutValue
+        {
+            get
+            {
+                int.TryParse(TxtScanTimeout.Text, out int delay);
+                return delay;
+            }
+        }
+
         private EditText TxtDelay =>
             FindViewById<EditText>(Resource.Id.txtDelay);
+
+        private int DelayValue
+        {
+            get
+            {
+                int.TryParse(TxtDelay.Text, out int delay);
+                return delay;
+            }
+        }
 
         private Android.Widget.Switch SwitchAdaptiveDelay =>
             FindViewById<Android.Widget.Switch>(Resource.Id.switchAdaptiveDelay);
@@ -53,8 +86,14 @@ namespace BBTDApp.Activities
         private Android.Widget.Switch SwitchAutoFocus =>
             FindViewById<Android.Widget.Switch>(Resource.Id.switchAutofocus);
 
+        private Android.Widget.Switch SwitchTryHarder =>
+            FindViewById<Android.Widget.Switch>(Resource.Id.switchTryHarder);
+
         private Android.Widget.Button BtnScanSingle =>
             FindViewById<Android.Widget.Button>(Resource.Id.btnScanSingle);
+
+        private Android.Widget.Button BtnScanOneByOne =>
+            FindViewById<Android.Widget.Button>(Resource.Id.btnScanOneByOne);
 
         private Android.Widget.Button BtnScanContinuous =>
             FindViewById<Android.Widget.Button>(Resource.Id.btnScanContinuous);
@@ -82,8 +121,7 @@ namespace BBTDApp.Activities
 
         private MobileBarcodeScanningOptions BaseOptionsFactory()
         {
-            int.TryParse(TxtDelay.Text, out int delay);
-            delay = delay == default ? 10 : delay;
+            var delay = DelayValue == default ? 10 : DelayValue;
 
             return new MobileBarcodeScanningOptions
             {
@@ -94,7 +132,7 @@ namespace BBTDApp.Activities
                 DisableAutofocus = !SwitchAutoFocus.Checked,
                 AutoRotate = false, // don't rotate the camera feed to match the device orientation
                 TryInverted = false, // don't try inverted barcodes
-                TryHarder = false, // don't spend extra time to decode "difficult" barcodes (e.g. poor quality)
+                TryHarder = SwitchTryHarder.Checked, // several ways to improve readability of barcodes, but also increase processing time
                 //AssumeGS1 = false,
                 //CharacterSet = null,
                 //PureBarcode = false,
@@ -121,6 +159,7 @@ namespace BBTDApp.Activities
             SpinBarcodeType.ItemSelected += SpinBarcodeType_ItemSelected;
             BtnScanWebAppConfiguration.Click += OnBtnScanConfiguration_Click;
             BtnScanSingle.Click += OnBtnScanSingle_Click;
+            BtnScanOneByOne.Click += OnBtnScanOneByOne_Click;
             BtnScanContinuous.Click += OnBtnScanContinuous_Click;
 
             _permissionStatusCamera = await Permissions.CheckStatusAsync<Permissions.Camera>();
@@ -214,6 +253,8 @@ namespace BBTDApp.Activities
                 Logger.AddLog("Single item scan started", LogLevel.Debug);
 
                 var scanned = await ReadFromScanner();
+                Console.WriteLine($"Raw data scanned: {scanned}");
+
                 if (string.IsNullOrEmpty(scanned))
                 {
                     Logger.AddLog("Did not scan", LogLevel.Error);
@@ -237,10 +278,95 @@ namespace BBTDApp.Activities
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: Problem with scanning: {ex.Message}");
-                Toast.MakeText(this, "Error: Problem with scanning", ToastLength.Short).Show();
-                throw;
             }
         }
+
+        private async void OnBtnScanOneByOne_Click(object sender, System.EventArgs e)
+        {
+            try
+            {
+                if (!(await RequestPermissions()))
+                    return;
+
+                Logger.AddLog("One-by-one item scan started", LogLevel.Debug);
+
+                for (int i = 0; i < NumberOfItemsValue; i++)
+                {
+                    var scanned = await ReadFromScanner(addDelay: 500, timeout: ScanTimeoutValue);
+                    Console.WriteLine($"Raw data scanned: {scanned}");
+
+                    if (string.IsNullOrEmpty(scanned))
+                    {
+                        Logger.AddLog("Did not scan", LogLevel.Error);
+
+                        await SendBarcodeData(scanned);
+                    }
+                    else
+                    {
+                        Logger.AddLog("One-by-one item scanned", LogLevel.Debug);
+
+                        Models.Person personData = null;
+                        try {
+                            personData = JsonSerializer.Deserialize<Models.Person>(scanned);
+                            Logger.AddLog($"[Barcode id={personData.Id}] Read barcode data deserialized in app", LogLevel.Debug, personData.Id, LogOperation.BC_READ);
+                            await SendBarcodeData(scanned);
+                            Logger.AddLog($"[Barcode id={personData.Id}] Read barcode data sent to server", LogLevel.Debug, personData.Id, LogOperation.BC_SENT);
+                        }
+                        catch (JsonException ex)
+                        {
+                            Logger.AddLog($"Read barcode data deserialization error", LogLevel.Debug);
+                            await SendBarcodeData(scanned);
+                        }
+                    }
+                }
+
+                await Logger.DeliverLogsAsync();
+                Toast.MakeText(this, "Logs delivered", ToastLength.Short).Show();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: Problem with scanning: {ex.Message}");
+            }
+        }
+
+
+        //private async void OnBtnScanOneByOne_Click(object sender, System.EventArgs e)
+        //{
+        //    try
+        //    {
+        //        if (!(await RequestPermissions()))
+        //            return;
+
+        //        Logger.AddLog("One-by-one item scan started", LogLevel.Debug);
+
+        //        var scanned = await ReadMultipleFromScanner();
+        //        Console.WriteLine($"Raw data scanned: {scanned}");
+
+        //        if (string.IsNullOrEmpty(scanned))
+        //        {
+        //            Logger.AddLog("Did not scan", LogLevel.Error);
+        //        }
+        //        else
+        //        {
+        //            Logger.AddLog("One-by-one item scanned", LogLevel.Debug);
+
+        //            var personData = JsonSerializer.Deserialize<Models.Person>(scanned);
+
+        //            Logger.AddLog($"[Barcode id={personData.Id}] Read barcode data deserialized in app", LogLevel.Debug, personData.Id, LogOperation.BC_READ);
+
+        //            await SendBarcodeData(scanned);
+
+        //            Logger.AddLog($"[Barcode id={personData.Id}] Read barcode data sent to server", LogLevel.Debug, personData.Id, LogOperation.BC_SENT);
+        //        }
+
+        //        await Logger.DeliverLogsAsync();
+        //        Toast.MakeText(this, "Logs delivered", ToastLength.Short).Show();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error: Problem with scanning: {ex.Message}");
+        //    }
+        //}
 
         private long? LastChecksum = null;
 
@@ -253,10 +379,10 @@ namespace BBTDApp.Activities
 
             LastChecksum = null;
 
-            await StartReadingFromScanner(OnScannerRead, OnScannerClosed);
+            await StartScanContinuous(OnScannerRead, OnScannerClosed);
         }
 
-        private async Task StartReadingFromScanner(Func<ScanResult, MobileBarcodeScanningOptions, Task> scanResultAction, Func<Task> scannerClosedAction)
+        private async Task StartScanContinuous(Func<ScanResult, MobileBarcodeScanningOptions, Task> scanResultAction, Func<Task> scannerClosedAction)
         {
             try
             {
@@ -280,7 +406,6 @@ namespace BBTDApp.Activities
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: Barcode scanning failed: {ex.Message}");
-                Toast.MakeText(this, "Error: Barcode scanning failed", ToastLength.Short).Show();
             }
         }
 
@@ -288,14 +413,6 @@ namespace BBTDApp.Activities
         {
             try
             {
-                //if (scanResult == null)
-                //{
-                //    // TODO: this code is bad
-                //    await Logger.DeliverLogsAsync();
-                //    Toast.MakeText(this, "Logs delivered", ToastLength.Short).Show();
-                //    return;
-                //}
-
                 if (string.IsNullOrEmpty(scanResult.Text))
                 {
                     Logger.AddLog("Did not scan", LogLevel.Error);
@@ -330,8 +447,6 @@ namespace BBTDApp.Activities
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: Problem with scanning: {ex.Message}");
-                Toast.MakeText(this, "Error: Problem with scanning", ToastLength.Short).Show();
-                throw;
             }
         }
 
@@ -346,15 +461,14 @@ namespace BBTDApp.Activities
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: Problem with log delivery: {ex.Message}");
-                Toast.MakeText(this, "Error: Problem with log delivery", ToastLength.Short).Show();
             }
         }
 
-        private async Task<string> ReadFromScanner(ZXing.BarcodeFormat? barcodeFormat = null)
+        private async Task<string> ReadFromScanner(ZXing.BarcodeFormat? barcodeFormat = null, int? addDelay = null, int? timeout = null)
         {
             try
             {
-                var scanner = new MobileBarcodeScanner();
+                var scanner = new MyMobileBarcodeScanner();
 
                 var options = BaseOptionsFactory();
 
@@ -368,10 +482,21 @@ namespace BBTDApp.Activities
                     options.PossibleFormats = new List<ZXing.BarcodeFormat>() { barcodeFormat.Value };
                 }
 
-                var scanResult = await scanner.Scan(this, options);
+                var scanResult =
+                    timeout.HasValue ?
+                        await scanner.ScanWithTimeout(this, options, timeout.Value) :
+                        await scanner.Scan(this, options);
+
                 if (scanResult == null)
                 {
-                    Console.WriteLine("Warning: Barcode scanning returned null");
+                    Console.WriteLine("Warning: Barcode scanning returned null (timeout?)");
+                }
+
+                if (addDelay.HasValue)
+                {
+                    await Task.Delay(addDelay.Value); // Wait before cancelling, otherwise the scanner can crash in the following scan
+                    scanner.Cancel();
+                    await Task.Delay(addDelay.Value); // Wait after cancelling, for the UI to update properly
                 }
 
                 return scanResult.Text;
@@ -384,6 +509,44 @@ namespace BBTDApp.Activities
             }
         }
 
+        //private async Task<List<string>> ReadMultipleFromScanner(ZXing.BarcodeFormat? barcodeFormat = null)
+        //{
+        //    try
+        //    {
+        //        var scanner = new MyMobileBarcodeScanner();
+
+        //        var options = BaseOptionsFactory();
+
+        //        if (!barcodeFormat.HasValue)
+        //        {
+        //            var selectedBarcodeType = BarcodeTypes[SpinBarcodeType.SelectedItemPosition];
+        //            options.PossibleFormats = new List<ZXing.BarcodeFormat>() { (ZXing.BarcodeFormat)selectedBarcodeType.Value };
+        //        }
+        //        else
+        //        {
+        //            options.PossibleFormats = new List<ZXing.BarcodeFormat>() { barcodeFormat.Value };
+        //        }
+
+        //        List<string> results = new List<string>();
+        //        for (int i = 0; i < 10; i++)
+        //        {
+        //            var res = await scanner.ScanOneByOneAsync(this, options);
+        //            results.Add(res.Text);
+        //            await Task.Delay(500); // Wait before cancelling, otherwise the scanner can crash in the following scan
+        //            scanner.Cancel();
+        //            await Task.Delay(500); // Wait after cancelling, for the UI to update properly
+        //        }
+
+        //        return results;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine("Error: Barcode scanning failed");
+        //        Console.WriteLine(ex.Message);
+        //        return "";
+        //    }
+        //}
+
         private async Task SendBarcodeData(string scanned)
         {
             try
@@ -391,7 +554,7 @@ namespace BBTDApp.Activities
                 var client = new HttpClient();
                 var content = new StringContent(scanned, Encoding.UTF8, "application/json");
 
-                var resp = await client.PostAsync($"{TxtWebAppEndpoint.Text}/Home/Reader", content);
+                var resp = await client.PostAsync($"{TxtWebAppEndpoint.Text}/TestingArea/DataFromReader", content);
                 if (!resp.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Error: HttpClient failed: {resp.StatusCode}: {resp.ReasonPhrase}");
@@ -401,7 +564,6 @@ namespace BBTDApp.Activities
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: SendBarcodeData failed: {ex.Message}");
-                Toast.MakeText(this, "Error: SendBarcodeData failed", ToastLength.Short).Show();
             }
         }
 

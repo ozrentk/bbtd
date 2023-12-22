@@ -10,6 +10,7 @@
         public const string BC_SENT = "BC_SENT";
         public const string BC_DATA_RECV = "BC_DATA_RECV";
         public const string BC_NOTIFY = "BC_NOTIFY";
+        public const string BC_DETAILS = "BC_DETAILS";
         public const string UI_BC_NOTIFIED = "UI_BC_NOTIFIED";
         public const string LOAD_TIMEOUT = "LOAD_TIMEOUT";
 

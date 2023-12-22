@@ -14,9 +14,6 @@ namespace BBTD.Mvc.Models
         [DisplayName("Level")]
         public string LevelString { get; set; }
 
-        //[JsonIgnore]
-        //public NLog.LogLevel Level => NLog.LogLevel.FromString(LevelString);
-
         [JsonPropertyName("t")]
         [DisplayName("Timestamp")]
         public DateTime ExactTimestamp { get; set; }

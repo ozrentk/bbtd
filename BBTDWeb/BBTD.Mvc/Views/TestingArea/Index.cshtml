@@ -1,30 +1,74 @@
 ﻿@model BBTD.Mvc.Models.BarcodeSlideshowData
 
-<p>Current id: <span id="currentBarcodeId">-</span></p>
+<style>
+    div.main-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        grid-column-gap: 8px;
+        justify-items: center;
+    }
+</style>
 
-<div>
-    @if (Model.BarcodeType == ZXing.BarcodeFormat.PDF_417)
-    {
-        <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; margin: 3rem" />
-    }
-    else
-    {
-        <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" width="@Model.BarcodeSize" height="@Model.BarcodeSize" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; margin: 3rem" />
-    }
+<div class="main-content">
+    <div>
+        <div class="mt-2 btn-group-vertical">
+            <a id="barcodeSlideshowNext" class="btn btn-outline-primary">Next barcode</a>
+            <a id="barcodeSlideshowStart" class="btn btn-primary">Slideshow test</a>
+            <a asp-action="Index" class="btn btn-warning">Reset</a>
+            <span class="btn btn-secondary" disabled>Current: <span class="badge badge-secondary" id="currentBarcodeId">-</span></span>
+        </div>
+        <span class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="moveToNext" checked="checked">
+            <label class="form-check-label" for="moveToNext">Always move to next</label>
+        </span>
+    </div>
+    <div>
+        <div class="mt-2">
+            <img id="barcodePlaceholder" src="/images/1x1-ffffffff.png" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; transform: scale(var(--pixel-device-percent))" />
+        </div>
+    </div>
+    <div>
+        <form asp-controller="TestingArea">
+            <ul class="mt-2 list-group">
+                <li class="list-group-item">Barcode size [mod]: <span id="bcSizeMod">-</span></li>
+                <li class="list-group-item">Barcode size [px]: <span id="bcSizePx">-</span></li>
+                <li class="list-group-item">Barcode size [mm]: <span id="bcSizeMm">-</span></li>
+                <li class="list-group-item">Module size [px]: <span id="modSizePx">-</span></li>
+                <li class="list-group-item">Module size [mm]: <span id="modSizeMm">-</span></li>
+                <li class="list-group-item">Pixel/mm ratio: <span id="pxMmRatios">-</span></li>
+            </ul>
+            <ul class="mt-2 list-group">
+                <li class="list-group-item">
+                    <div class="row mt-1">
+                        <div class="col-6"><label asp-for="DistanceFromScreen" class="control-label"></label></div>
+                        <div class="col-6"><input asp-for="DistanceFromScreen" class="form-control" width="5" min="0" step="5"></div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-6"><label asp-for="BarcodeType" class="control-label"></label></div>
+                        <div class="col-6">
+                            <select asp-for="BarcodeType" class="form-control">
+                                <option value="1">Aztec</option>
+                                <option value="32">Data Matrix</option>
+                                <option value="1024">PDF417</option>
+                                <option value="2048">QR Code</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="mt-2 btn btn-primary">Set</button>
+                </li>
+            </ul>
+        </form>
+    </div>
 </div>
 
-<div class="mt-2">
-    <a id="barcodeSlideshowNext" class="btn btn-outline-primary">Next barcode</a> |
-    <a id="barcodeSlideshowStart" class="btn btn-primary">Slideshow test</a> |
-    <a asp-action="Index" class="btn btn-warning">Reset</a>
-</div>
 
-<div style="height: 10em">
+<div style="height: 30em">
 </div>
 
 @section Scripts {
     <script>
         const logDeliveryUrl = "/api/logdelivery/fromwebui";
+        const barcodeDetailsUrl = "/testingarea/barcodedetails";
         let logs = [];
         let isSlideShowTest = false;
 
@@ -86,9 +130,13 @@
                 await sendLog(message, levelNumber, reference, operation);
         }
 
+        const root = document.documentElement;
+        root.style.setProperty('--pixel-device-percent', 1 / window.devicePixelRatio);
+
         const imageBaseUrl = "/testingarea/barcode";
         const hubUrl = "/messageHub";
         const messageMethod = "Reading";
+        const clientReadTimeoutMethod = "ClientReadTimeout";
         const barcodeReadTimeout = @Model.TimeoutMilliseconds;
         let barcodeReadingTimeoutId = -1;
 
@@ -99,6 +147,7 @@
         const onDomContentLoaded = async (event) => {
             let signalrConn = new signalR.HubConnectionBuilder().withUrl(hubUrl).build();
             signalrConn.on(messageMethod, onReceiveMessage);
+            signalrConn.on(clientReadTimeoutMethod, onReceiveClientReadTimeout);
 
             let btnElNext = document.getElementById("barcodeSlideshowNext");
             btnElNext.addEventListener("click", barcodeSlideNext);
@@ -119,22 +168,26 @@
             clearTimeout(barcodeReadingTimeoutId);
             if (!isReadingCorrect) {
                 await addOrSendLog(`[Barcode id=${id}] UI received read failure confirmation`, LogLevel.Error, id, LogOperation.UI_RECV_FAIL);
-                //console.error(`Id: ${id} read incorrectly`);
             } 
-            //else if (id == (currentIndex - 2)) {
-            //    addLog(`Id: ${id} read too fast`, 3);
-            //    //console.error(`Id: ${id} read too fast`);
-            //} 
-            //else if (id != (currentIndex - 1)) {
-            //    addLog(`Id: ${id} incorrect`, 3);
-            //    //console.error(`Id: ${id} incorrect`);
-            //} 
             else {
                 await addOrSendLog(`[Barcode id=${id}] UI received barcode reading success information`, LogLevel.Debug, id, LogOperation.UI_BC_NOTIFIED);
-                //console.log(`Id: ${id} read succesfully`);
             }
 
-            if (isSlideShowTest) {
+            let btnElMoveToNext = document.getElementById("moveToNext");
+            if (isSlideShowTest || btnElMoveToNext.checked) {
+                await barcodeSlideNext();
+            }
+        }
+
+        const onReceiveClientReadTimeout = async () => {
+            const id = ids[currentIndex];
+
+            await addOrSendLog(`[Barcode id=${id}] UI received read failure confirmation for expected id ${id}`, LogLevel.Error, id, LogOperation.UI_RECV_FAIL);
+
+            clearTimeout(barcodeReadingTimeoutId);
+
+            let btnElMoveToNext = document.getElementById("moveToNext");
+            if (isSlideShowTest || btnElMoveToNext.checked) {
                 await barcodeSlideNext();
             }
         }
@@ -152,7 +205,29 @@
                 const id = ids[currentIndex];
                 currentBarcodeIdEl.innerText = id;
                 imgEl.src = `${imageBaseUrl}/${id}`;
-                await addOrSendLog(`[Barcode id=${id}] Sending image request from UI to server`, LogLevel.Debug, id, LogOperation.IMG_REQ)
+                await addOrSendLog(`[Barcode id=${id}] Sending image request from UI to server`, LogLevel.Debug, id, LogOperation.IMG_REQ);
+                if(!isSlideShowTest) {
+                    const resp = await fetch(`${barcodeDetailsUrl}/${id}`);
+                    const details = await resp.json();
+
+                    console.log(details);
+
+                    const bcSizeMod = `${details.bcWidthMod} x ${details.bcHeightMod}`;
+                    const bcSizePx = `${details.bcWidthPx.toFixed(2)} x ${details.bcHeightPx.toFixed(2)}`;
+                    const modSizePx = `${details.moduleWidthPx.toFixed(2)} x ${details.moduleHeightPx.toFixed(2)}`;
+                    document.getElementById("bcSizeMod").innerText = bcSizeMod;
+                    document.getElementById("bcSizePx").innerText = bcSizePx;
+                    document.getElementById("modSizePx").innerText = modSizePx;
+
+                    if (details.isMmAvailable) {
+                        const bcSizeMm = `${details.bcWidthMm.toFixed(2)} x ${details.bcHeightMm.toFixed(2)}`;
+                        const modSizeMm = `${details.moduleWidthMm.toFixed(2)} x ${details.moduleHeightMm.toFixed(2)}`;
+                        const pxMmRatios = `${details.pxMmWidthRatio.toFixed(2)} x ${details.pxMmHeightRatio.toFixed(2)}`;
+                        document.getElementById("bcSizeMm").innerText = bcSizeMm;
+                        document.getElementById("modSizeMm").innerText = modSizeMm;
+                        document.getElementById("pxMmRatios").innerText = pxMmRatios;
+                    }
+                }
             } else {
                 // Finish
                 currentIndex = -1;

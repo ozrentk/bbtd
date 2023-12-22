@@ -1,0 +1,30 @@
+﻿@model IEnumerable<BBTD.Mvc.Models.NLogRecord>
+
+@{
+    ViewData["Title"] = "LogBatchStartList";
+}
+
+<h1>List of log batches</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ExactTimestamp)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExactTimestamp)
+            </td>
+            <td>
+                @Html.ActionLink("Logs", "LogList", new { from=item.ExactTimestamp })
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

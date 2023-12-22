@@ -14,11 +14,26 @@ namespace BBTD.Mvc.Models
         [Display(Name = "Number of Barcode Items")]
         public int NumberOfItems { get; set; }
 
-        [Display(Name = "Barcode Size")]
+        [Display(Name = "Barcode Size [px]")]
         public int BarcodeSize { get; set; }
 
-        [Display(Name = "Barcode read timeout [ms]")]
-        public int TimeoutMilliseconds { get; set; }
+        [Display(Name = "Server barcode read timeout [ms]")]
+        public int ServerTimeoutMilliseconds { get; set; }
+
+        [Display(Name = "Screen width [mm]")]
+        public int? ScreenWidthMm { get; set; }
+
+        [Display(Name = "Screen height [mm]")]
+        public int? ScreenHeightMm { get; set; }
+
+        [Display(Name = "Screen width [px]")]
+        public int? ScreenWidthPx { get; set; }
+
+        [Display(Name = "Screen height [px]")]
+        public int? ScreenHeightPx { get; set; }
+
+        [Display(Name = "Distance")]
+        public int DistanceFromScreen { get; set; }
 
         public bool IsRefresh { get; set; }
     }
